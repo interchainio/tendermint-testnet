@@ -2,8 +2,12 @@
 set -euo pipefail
 
 INPLACE_SED_FLAG='-i'
+SED_BW='\b'
+SED_EW='\b'
 if [[ $(uname) == "Darwin" ]]; then
 	INPLACE_SED_FLAG='-i ""'
+	SED_BW='[[:<:]]'
+	SED_EW='[[:>:]]'
 fi
 
 VERSION=$1
@@ -15,7 +19,7 @@ OLD_IPS=`grep -E '(ipv4_address|container_name)' ./testnet/docker-compose.yml | 
 
 for file in `find ./testnet/ -name config.toml -type f`; do
 	while read old <&3 && read new <&4; do
-		sed $INPLACE_SED_FLAG "s/\b$old\b/$new/g" $file
+		sed $INPLACE_SED_FLAG "s/$SED_BW$old$SED_EW/$new/g" $file
 	done 3< <(echo $OLD_IPS | tr ' ' '\n') 4< <(echo $NEW_IPS | tr , '\n' )
 done
 
