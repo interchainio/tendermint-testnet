@@ -19,7 +19,7 @@ OLD_IPS=`grep -E '(ipv4_address|container_name)' ./testnet/docker-compose.yml | 
 
 for file in `find ./testnet/ -name config.toml -type f`; do
 	while read old <&3 && read new <&4; do
-		sed $INPLACE_SED_FLAG "s/$SED_BW$old$SED_EW/$new/g" $file
+		eval sed $INPLACE_SED_FLAG \"s/$SED_BW$old$SED_EW/$new/g\" $file
 	done 3< <(echo $OLD_IPS | tr ' ' '\n') 4< <(echo $NEW_IPS | tr , '\n' )
 done
 
@@ -33,11 +33,12 @@ for fname in `find . -path './testnet/seed*' -type f -name config.toml`; do
 		| grep "\($seedsSlashSeparated\)" || true`
 
 	result=`echo "$persistentPeers" | paste -s -d, -`
-	sed $INPLACE_SED_FLAG "s/persistent_peers = .*/persistent-peers = \"$result\"/g" $fname
+	replace_str="s/persistent_peers = .*/persistent_peers = \\\"$result\\\"/g"
+	eval sed $INPLACE_SED_FLAG \"$replace_str\" $fname
 done
 
 for fname in `find './testnet/' -type f -name config.toml`; do
-	sed $INPLACE_SED_FLAG "s/prometheus = .*/prometheus = true/g" $fname
+	eval sed $INPLACE_SED_FLAG \"s/prometheus = .*/prometheus = true/g\" $fname
 done
 
 rm -rf ./ansible/testnet
