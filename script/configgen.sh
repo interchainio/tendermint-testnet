@@ -1,13 +1,19 @@
 #!/bin/bash
 set -euo pipefail
 
+# The functionality need from sed in this script is not covered by POSIX; it uses different syntax
+# in gnu sed and in BSD sed.
+# These helper variables have been introduced to deal with those differences.
+# Moreover, sed's in place mode requires flag '-i ""' in BSD sed, which makes the use of 'eval'
+# necessary every time 'sed -i' is called in order to re-interpret the flag's contents when stored
+# in a variable.
 INPLACE_SED_FLAG='-i'
-SED_BW='\b'
+SED_BW='\b' # No difference needed between beginning of word and end of word in Linux
 SED_EW='\b'
 if [[ $(uname) == "Darwin" ]]; then
 	INPLACE_SED_FLAG='-i ""'
-	SED_BW='[[:<:]]'
-	SED_EW='[[:>:]]'
+	SED_BW='[[:<:]]' #Beginning of word in regex
+	SED_EW='[[:>:]]' #End of word in regex
 fi
 
 VERSION=$1
