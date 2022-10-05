@@ -10,7 +10,7 @@ INPLACE_SED_FLAG='-i'
 SED_BW='\b' # No difference needed between beginning of word and end of word in Linux
 SED_EW='\b'
 if [[ $(uname) == "Darwin" ]]; then
-	INPLACE_SED_FLAG='-i ""'
+	INPLACE_SED_FLAG='-i.bak'
 	SED_BW='[[:<:]]' #Beginning of word in regex
 	SED_EW='[[:>:]]' #End of word in regex
 fi
@@ -138,6 +138,7 @@ behind() {
 	address=$1
 	heighest=$2
 	ch=`curl --silent $address:26657/status | sed -n 's/\"latest_block_height\": "\([0-9]*\)",/\1/p' | tr -d ' '`
+	echo "distance($address): $ch --> $heighest"
 	if [ $ch -le `expr $heighest - 100` ]; then
 		return 0
 	fi
@@ -149,7 +150,7 @@ while true; do
 	ansible-playbook ./ansible/re-init-testapp.yaml -u root -i ./ansible/hosts --limit=ephemeral -e "testnet_dir=./rotating" -f 20
 
 	# Wait for all of the ephemeral hosts to be running.
-	addrs=( `echo $ADDRS | sed 's/,/ /g'`)
+	addrs=( `echo $ADDRS | sed 's/,/ /g'` )
 	for addr in $addrs; do
 		while ! running $addr; do
 			sleep 2
@@ -161,12 +162,14 @@ while true; do
 	h=$(heighest `ansible all --list-hosts -i ./ansible/hosts --limit validators | tail +2 | paste -s -d, - | tr -d ' '`)
 	addrs=( `echo $ADDRS | sed 's/,/ /g'` )
 	while [ ${#addrs[@]} -gt 0 ]; do
-		addr=$addrs[1]
+		echo "New iteration: addrs=${addrs[@]}"
+		addr=${addrs[0]}
 		if ! behind $addr $h; then
 			ansible-playbook ./ansible/stop-testapp.yaml -u root -i ./ansible/hosts --limit=$addr
 			addrs=(${addrs[@]/$addr})
 		else
 			addrs=(${addrs[@]/$addr} $addr)
+			sleep 1
 		fi
 	done
 	echo "Ephemeral have all completed blocksync"
