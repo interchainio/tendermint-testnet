@@ -64,8 +64,8 @@ runload:
 
 .PHONY: restart
 restart:
-	cd ansible && ansible-playbook restart-prometheus.yaml -i hosts -u root
 	cd ansible && ansible-playbook -i hosts -u root update-testapp.yaml -f $(ANSIBLE_FORKS) -e "version_tag=$(VERSION_TAG)"
+	cd ansible && ansible-playbook restart-prometheus.yaml -i hosts -u root
 	cd ansible && ansible-playbook re-init-testapp.yaml -i hosts -u root -f $(ANSIBLE_FORKS)
 
 .PHONY: rotate
